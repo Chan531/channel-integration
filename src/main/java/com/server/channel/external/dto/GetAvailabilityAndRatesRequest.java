@@ -3,6 +3,8 @@ package com.server.channel.external.dto;
 import java.time.LocalDate;
 import java.util.List;
 
+import com.server.channel.external.exception.SupplierChunkSizeExceededException;
+
 public record GetAvailabilityAndRatesRequest(
         List<String> hotelCodes,
         LocalDate checkIn,
@@ -10,4 +12,13 @@ public record GetAvailabilityAndRatesRequest(
         int adults,
         int children
 ) {
+
+    private static final int MAX_HOTEL_CODES = 50;
+
+    public GetAvailabilityAndRatesRequest {
+        if (hotelCodes.size() > MAX_HOTEL_CODES) {
+            throw new SupplierChunkSizeExceededException(
+                    "hotelCodes must not exceed " + MAX_HOTEL_CODES + " but was " + hotelCodes.size());
+        }
+    }
 }
