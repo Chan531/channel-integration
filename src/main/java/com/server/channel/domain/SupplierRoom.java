@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
-public class SupplierRoomType {
+public class SupplierRoom {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,5 +28,5 @@ public class SupplierRoomType {
     private Long hotelId;
 
     @Column(nullable = false)
-    private String roomTypeCode;
+    private String roomCode;
 }
