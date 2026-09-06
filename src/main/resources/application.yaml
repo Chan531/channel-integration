@@ -5,5 +5,9 @@ spring:
 supplier:
   a:
     base-url: http://localhost:9090
+    connect-timeout-ms: 1000
+    response-timeout-ms: 4000
   b:
     base-url: http://localhost:9090
+    connect-timeout-ms: 1000
+    response-timeout-ms: 4000

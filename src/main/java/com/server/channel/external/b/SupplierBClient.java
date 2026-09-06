@@ -37,6 +37,7 @@ public class SupplierBClient implements SupplierClient {
                 .uri("/b/api/properties")
                 .retrieve()
                 .bodyToMono(SupplierBHotelsResponse.class)
+                .onErrorMap(SupplierBClient::isUnmapped, SupplierBClient::toUnavailableException)
                 .block();
 
         validateSuccess(response.resultCode(), response.resultMessage());
@@ -61,6 +62,7 @@ public class SupplierBClient implements SupplierClient {
                         .build())
                 .retrieve()
                 .bodyToMono(SupplierBAvailabilityResponse.class)
+                .onErrorMap(SupplierBClient::isUnmapped, SupplierBClient::toUnavailableException)
                 .block();
 
         validateSuccess(response.resultCode(), response.resultMessage());
@@ -70,6 +72,14 @@ public class SupplierBClient implements SupplierClient {
                 .toList();
 
         return new GetAvailabilityAndRatesResponse(offers);
+    }
+
+    private static boolean isUnmapped(Throwable throwable) {
+        return !(throwable instanceof SupplierUnavailableException);
+    }
+
+    private static SupplierUnavailableException toUnavailableException(Throwable throwable) {
+        return new SupplierUnavailableException("Supplier B call failed: " + throwable.getMessage(), throwable);
     }
 
     private static void validateSuccess(String resultCode, String resultMessage) {

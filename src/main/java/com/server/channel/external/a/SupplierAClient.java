@@ -44,6 +44,7 @@ public class SupplierAClient implements SupplierClient {
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, SupplierAClient::toErrorMono)
                 .bodyToMono(SupplierAHotelsResponse.class)
+                .onErrorMap(SupplierAClient::isUnmapped, SupplierAClient::toUnavailableException)
                 .block();
 
         List<GetHotelsResponse.HotelInfo> hotels = response.items().stream()
@@ -67,6 +68,7 @@ public class SupplierAClient implements SupplierClient {
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, SupplierAClient::toErrorMono)
                 .bodyToMono(SupplierAAvailabilityResponse.class)
+                .onErrorMap(SupplierAClient::isUnmapped, SupplierAClient::toUnavailableException)
                 .block();
 
         List<GetAvailabilityAndRatesResponse.RoomOffer> offers = response.items().stream()
@@ -74,6 +76,15 @@ public class SupplierAClient implements SupplierClient {
                 .toList();
 
         return new GetAvailabilityAndRatesResponse(offers);
+    }
+
+    private static boolean isUnmapped(Throwable throwable) {
+        return !(throwable instanceof SupplierUnavailableException)
+                && !(throwable instanceof SupplierChunkSizeExceededException);
+    }
+
+    private static SupplierUnavailableException toUnavailableException(Throwable throwable) {
+        return new SupplierUnavailableException("Supplier A call failed: " + throwable.getMessage(), throwable);
     }
 
     private static Mono<? extends Throwable> toErrorMono(ClientResponse response) {
