@@ -13,6 +13,7 @@ import com.server.channel.external.b.dto.SupplierBHotelsResponse;
 import com.server.channel.external.dto.GetAvailabilityAndRatesRequest;
 import com.server.channel.external.dto.GetAvailabilityAndRatesResponse;
 import com.server.channel.external.dto.GetHotelsResponse;
+import com.server.channel.external.exception.SupplierUnavailableException;
 
 @Component
 public class SupplierBClient implements SupplierClient {
@@ -73,8 +74,7 @@ public class SupplierBClient implements SupplierClient {
 
     private static void validateSuccess(String resultCode, String resultMessage) {
         if (!SUCCESS_RESULT_CODE.equals(resultCode)) {
-            throw new IllegalStateException(
-                    "Supplier B request failed: resultCode=" + resultCode + ", resultMessage=" + resultMessage);
+            throw new SupplierUnavailableException(resultCode + ": " + resultMessage);
         }
     }
 
