@@ -5,3 +5,5 @@ spring:
 supplier:
   a:
     base-url: http://localhost:9090
+  b:
+    base-url: http://localhost:9090

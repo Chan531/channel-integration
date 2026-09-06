@@ -14,4 +14,11 @@ public class SupplierWebClientConfig {
                 .baseUrl(baseUrl)
                 .build();
     }
+
+    @Bean
+    public WebClient supplierBWebClient(@Value("${supplier.b.base-url}") String baseUrl) {
+        return WebClient.builder()
+                .baseUrl(baseUrl)
+                .build();
+    }
 }
