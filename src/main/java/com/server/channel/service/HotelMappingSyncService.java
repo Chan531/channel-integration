@@ -4,11 +4,15 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.server.channel.domain.SupplierCode;
 import com.server.channel.external.SupplierClient;
 import com.server.channel.external.dto.GetHotelsResponse;
+import com.server.channel.external.exception.SupplierUnavailableException;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class HotelMappingSyncService {
@@ -18,8 +22,13 @@ public class HotelMappingSyncService {
 
     public void syncHotels() {
         for (SupplierClient client : supplierClients) {
-            GetHotelsResponse response = client.getHotels();
-            hotelMappingWriter.write(client.getSupplierCode(), response);
+            SupplierCode code = client.getSupplierCode();
+            try {
+                GetHotelsResponse response = client.getHotels();
+                hotelMappingWriter.write(code, response);
+            } catch (SupplierUnavailableException e) {
+                log.warn("Failed to sync hotels for supplier {}: {}", code, e.getMessage());
+            }
         }
     }
 }
