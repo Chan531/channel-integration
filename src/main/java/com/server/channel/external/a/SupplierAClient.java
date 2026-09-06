@@ -3,19 +3,28 @@ package com.server.channel.external.a;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
+
+import reactor.core.publisher.Mono;
 
 import com.server.channel.domain.SupplierCode;
 import com.server.channel.external.SupplierClient;
 import com.server.channel.external.a.dto.SupplierAAvailabilityResponse;
+import com.server.channel.external.a.dto.SupplierAErrorResponse;
 import com.server.channel.external.a.dto.SupplierAHotelsResponse;
 import com.server.channel.external.dto.GetAvailabilityAndRatesRequest;
 import com.server.channel.external.dto.GetAvailabilityAndRatesResponse;
 import com.server.channel.external.dto.GetHotelsResponse;
+import com.server.channel.external.exception.SupplierChunkSizeExceededException;
+import com.server.channel.external.exception.SupplierUnavailableException;
 
 @Component
 public class SupplierAClient implements SupplierClient {
+
+    private static final String TOO_MANY_HOTEL_CODES = "TOO_MANY_HOTEL_CODES";
 
     private final WebClient webClient;
 
@@ -33,6 +42,7 @@ public class SupplierAClient implements SupplierClient {
         SupplierAHotelsResponse response = webClient.get()
                 .uri("/a/v1/hotels")
                 .retrieve()
+                .onStatus(HttpStatusCode::isError, SupplierAClient::toErrorMono)
                 .bodyToMono(SupplierAHotelsResponse.class)
                 .block();
 
@@ -55,6 +65,7 @@ public class SupplierAClient implements SupplierClient {
                         .queryParam("children", request.children())
                         .build())
                 .retrieve()
+                .onStatus(HttpStatusCode::isError, SupplierAClient::toErrorMono)
                 .bodyToMono(SupplierAAvailabilityResponse.class)
                 .block();
 
@@ -63,6 +74,18 @@ public class SupplierAClient implements SupplierClient {
                 .toList();
 
         return new GetAvailabilityAndRatesResponse(offers);
+    }
+
+    private static Mono<? extends Throwable> toErrorMono(ClientResponse response) {
+        return response.bodyToMono(SupplierAErrorResponse.class)
+                .map(SupplierAClient::toException);
+    }
+
+    private static RuntimeException toException(SupplierAErrorResponse error) {
+        if (TOO_MANY_HOTEL_CODES.equals(error.error())) {
+            return new SupplierChunkSizeExceededException(error.message());
+        }
+        return new SupplierUnavailableException(error.error() + ": " + error.message());
     }
 
     private static GetHotelsResponse.HotelInfo toHotelInfo(SupplierAHotelsResponse.Hotel hotel) {
