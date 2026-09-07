@@ -13,7 +13,7 @@ public record GetAvailabilityAndRatesRequest(
         int children
 ) {
 
-    private static final int MAX_HOTEL_CODES = 50;
+    public static final int MAX_HOTEL_CODES = 50;
 
     public GetAvailabilityAndRatesRequest {
         if (hotelCodes.size() > MAX_HOTEL_CODES) {
