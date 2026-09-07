@@ -2,6 +2,10 @@ spring:
   application:
     name: channel-integration
 
+hotel-mapping:
+  sync:
+    fixed-delay-ms: 86400000
+
 supplier:
   a:
     base-url: http://localhost:9090
