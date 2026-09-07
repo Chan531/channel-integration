@@ -5,7 +5,7 @@ import java.util.Set;
 
 import com.server.channel.domain.SupplierCode;
 
-public record HotelSearchResponse(
+public record StaySearchResponse(
         List<InternalRoomOffer> offers,
         Set<SupplierCode> failedSuppliers
 ) {

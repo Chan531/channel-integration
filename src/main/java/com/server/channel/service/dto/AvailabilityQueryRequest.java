@@ -8,4 +8,10 @@ public record AvailabilityQueryRequest(
         int adults,
         int children
 ) {
+
+    public AvailabilityQueryRequest {
+        if (!checkOut.isAfter(checkIn)) {
+            throw new IllegalArgumentException("checkOut must be after checkIn");
+        }
+    }
 }

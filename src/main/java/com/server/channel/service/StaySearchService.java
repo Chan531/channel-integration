@@ -6,22 +6,22 @@ import org.springframework.stereotype.Service;
 
 import com.server.channel.service.dto.AvailabilityQueryRequest;
 import com.server.channel.service.dto.AvailabilityQueryResponse;
-import com.server.channel.service.dto.HotelSearchResponse;
 import com.server.channel.service.dto.InternalRoomOffer;
+import com.server.channel.service.dto.StaySearchResponse;
 
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class HotelSearchService {
+public class StaySearchService {
 
     private final SupplierAvailabilityQueryService supplierAvailabilityQueryService;
     private final InternalRoomOfferResolver internalRoomOfferResolver;
 
-    public HotelSearchResponse searchHotels(AvailabilityQueryRequest request) {
+    public StaySearchResponse searchStays(AvailabilityQueryRequest request) {
         AvailabilityQueryResponse queryResponse = supplierAvailabilityQueryService.queryAll(request);
         List<InternalRoomOffer> offers = internalRoomOfferResolver.resolve(queryResponse.offers());
 
-        return new HotelSearchResponse(offers, queryResponse.failedSuppliers());
+        return new StaySearchResponse(offers, queryResponse.failedSuppliers());
     }
 }
