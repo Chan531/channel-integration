@@ -19,6 +19,8 @@ import com.server.channel.service.dto.HotelCodeChunk;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 @Slf4j
 @Service
@@ -58,6 +60,33 @@ public class SupplierAvailabilityQueryService {
     }
 
     private record ChunkTask(SupplierClient client, HotelCodeChunk chunk) {
+    }
+
+    private record ChunkResult(List<AvailabilityQueryResponse.RoomOffer> offers, SupplierCode failedSupplier) {
+    }
+
+    private Mono<ChunkResult> callAsync(SupplierClient client, HotelCodeChunk chunk, AvailabilityQueryRequest queryRequest) {
+        SupplierCode code = client.getSupplierCode();
+        GetAvailabilityAndRatesRequest request = new GetAvailabilityAndRatesRequest(
+                chunk.hotelCodes(), queryRequest.checkIn(), queryRequest.checkOut(),
+                queryRequest.adults(), queryRequest.children());
+
+        return Mono.fromCallable(() -> client.getAvailabilityAndRates(request))
+                .subscribeOn(Schedulers.boundedElastic())
+                .map(response -> toSuccessResult(code, response))
+                .onErrorResume(SupplierUnavailableException.class, e -> toFailureResult(code, e));
+    }
+
+    private static ChunkResult toSuccessResult(SupplierCode code, GetAvailabilityAndRatesResponse response) {
+        List<AvailabilityQueryResponse.RoomOffer> offers = response.offers().stream()
+                .map(offer -> toRoomOffer(code, offer))
+                .toList();
+        return new ChunkResult(offers, null);
+    }
+
+    private Mono<ChunkResult> toFailureResult(SupplierCode code, SupplierUnavailableException e) {
+        log.warn("Failed to query availability for supplier {}: {}", code, e.getMessage());
+        return Mono.just(new ChunkResult(List.of(), code));
     }
 
     private static AvailabilityQueryResponse.RoomOffer toRoomOffer(
