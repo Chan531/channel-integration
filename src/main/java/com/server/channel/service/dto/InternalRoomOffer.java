@@ -8,6 +8,7 @@ public record InternalRoomOffer(
         Long roomId,
         String roomName,
         int maxOccupancy,
+        boolean breakfastIncluded,
         int availableRooms,
         long totalPrice,
         String currency,

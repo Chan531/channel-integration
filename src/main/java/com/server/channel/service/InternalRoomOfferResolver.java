@@ -89,6 +89,7 @@ public class InternalRoomOfferResolver {
                 roomId,
                 offer.roomName(),
                 offer.maxOccupancy(),
+                offer.breakfastIncluded(),
                 availableRooms,
                 offer.totalPrice(),
                 offer.currency(),
