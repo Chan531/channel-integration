@@ -9,12 +9,14 @@ import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 
 import com.server.channel.domain.SupplierCode;
 import com.server.channel.external.SupplierClient;
 import com.server.channel.external.a.dto.SupplierAAvailabilityResponse;
 import com.server.channel.external.a.dto.SupplierAErrorResponse;
 import com.server.channel.external.a.dto.SupplierAHotelsResponse;
+import com.server.channel.external.config.SupplierRetrySpec;
 import com.server.channel.external.dto.GetAvailabilityAndRatesRequest;
 import com.server.channel.external.dto.GetAvailabilityAndRatesResponse;
 import com.server.channel.external.dto.GetHotelsResponse;
@@ -25,6 +27,8 @@ import com.server.channel.external.exception.SupplierUnavailableException;
 public class SupplierAClient implements SupplierClient {
 
     private static final String TOO_MANY_HOTEL_CODES = "TOO_MANY_HOTEL_CODES";
+
+    private static final Retry RETRY_SPEC = SupplierRetrySpec.exponentialBackoff(SupplierAClient::isRetryable);
 
     private final WebClient webClient;
 
@@ -45,6 +49,7 @@ public class SupplierAClient implements SupplierClient {
                 .onStatus(HttpStatusCode::isError, SupplierAClient::toErrorMono)
                 .bodyToMono(SupplierAHotelsResponse.class)
                 .onErrorMap(SupplierAClient::isUnmapped, SupplierAClient::toUnavailableException)
+                .retryWhen(RETRY_SPEC)
                 .block();
 
         List<GetHotelsResponse.HotelInfo> hotels = response.items().stream()
@@ -69,6 +74,7 @@ public class SupplierAClient implements SupplierClient {
                 .onStatus(HttpStatusCode::isError, SupplierAClient::toErrorMono)
                 .bodyToMono(SupplierAAvailabilityResponse.class)
                 .onErrorMap(SupplierAClient::isUnmapped, SupplierAClient::toUnavailableException)
+                .retryWhen(RETRY_SPEC)
                 .block();
 
         List<GetAvailabilityAndRatesResponse.RoomOffer> offers = response.items().stream()
@@ -85,6 +91,10 @@ public class SupplierAClient implements SupplierClient {
 
     private static SupplierUnavailableException toUnavailableException(Throwable throwable) {
         return new SupplierUnavailableException("Supplier A call failed: " + throwable.getMessage(), throwable);
+    }
+
+    private static boolean isRetryable(Throwable throwable) {
+        return throwable instanceof SupplierUnavailableException;
     }
 
     private static Mono<? extends Throwable> toErrorMono(ClientResponse response) {

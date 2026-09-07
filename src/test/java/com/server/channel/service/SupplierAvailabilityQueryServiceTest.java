@@ -79,8 +79,9 @@ class SupplierAvailabilityQueryServiceTest {
         AvailabilityQueryResponse response = supplierAvailabilityQueryService.queryAll(request);
         Duration elapsed = Duration.between(start, Instant.now());
 
-        // 순차라면 응답 타임아웃(4초)이 공급사 수만큼 곱해져 8초 가까이 걸림. 병렬이면 4초 근방.
-        assertThat(elapsed).isLessThan(Duration.ofSeconds(6));
+        // 공급사 1곳당 재시도 포함 최대 3번 시도(응답 타임아웃 4초 x 3 + 백오프)라 약 12~13초.
+        // 순차라면 공급사 수만큼 곱해져 25초 가까이 걸림. 병렬이면 그 절반 수준에서 끝난다.
+        assertThat(elapsed).isLessThan(Duration.ofSeconds(18));
         assertThat(response.failedSuppliers()).containsExactlyInAnyOrder(SupplierCode.A, SupplierCode.B);
     }
 

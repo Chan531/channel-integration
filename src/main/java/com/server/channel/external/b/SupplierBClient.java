@@ -6,10 +6,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import reactor.util.retry.Retry;
+
 import com.server.channel.domain.SupplierCode;
 import com.server.channel.external.SupplierClient;
 import com.server.channel.external.b.dto.SupplierBAvailabilityResponse;
 import com.server.channel.external.b.dto.SupplierBHotelsResponse;
+import com.server.channel.external.config.SupplierRetrySpec;
 import com.server.channel.external.dto.GetAvailabilityAndRatesRequest;
 import com.server.channel.external.dto.GetAvailabilityAndRatesResponse;
 import com.server.channel.external.dto.GetHotelsResponse;
@@ -19,6 +22,8 @@ import com.server.channel.external.exception.SupplierUnavailableException;
 public class SupplierBClient implements SupplierClient {
 
     private static final String SUCCESS_RESULT_CODE = "0000";
+
+    private static final Retry RETRY_SPEC = SupplierRetrySpec.exponentialBackoff(SupplierBClient::isRetryable);
 
     private final WebClient webClient;
 
@@ -37,10 +42,10 @@ public class SupplierBClient implements SupplierClient {
                 .uri("/b/api/properties")
                 .retrieve()
                 .bodyToMono(SupplierBHotelsResponse.class)
+                .doOnNext(r -> validateSuccess(r.resultCode(), r.resultMessage()))
                 .onErrorMap(SupplierBClient::isUnmapped, SupplierBClient::toUnavailableException)
+                .retryWhen(RETRY_SPEC)
                 .block();
-
-        validateSuccess(response.resultCode(), response.resultMessage());
 
         List<GetHotelsResponse.HotelInfo> hotels = response.data().items().stream()
                 .map(SupplierBClient::toHotelInfo)
@@ -62,10 +67,10 @@ public class SupplierBClient implements SupplierClient {
                         .build())
                 .retrieve()
                 .bodyToMono(SupplierBAvailabilityResponse.class)
+                .doOnNext(r -> validateSuccess(r.resultCode(), r.resultMessage()))
                 .onErrorMap(SupplierBClient::isUnmapped, SupplierBClient::toUnavailableException)
+                .retryWhen(RETRY_SPEC)
                 .block();
-
-        validateSuccess(response.resultCode(), response.resultMessage());
 
         List<GetAvailabilityAndRatesResponse.RoomOffer> offers = response.data().items().stream()
                 .map(SupplierBClient::toRoomOffer)
@@ -80,6 +85,10 @@ public class SupplierBClient implements SupplierClient {
 
     private static SupplierUnavailableException toUnavailableException(Throwable throwable) {
         return new SupplierUnavailableException("Supplier B call failed: " + throwable.getMessage(), throwable);
+    }
+
+    private static boolean isRetryable(Throwable throwable) {
+        return throwable instanceof SupplierUnavailableException;
     }
 
     private static void validateSuccess(String resultCode, String resultMessage) {
