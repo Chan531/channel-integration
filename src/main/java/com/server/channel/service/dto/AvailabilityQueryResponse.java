@@ -12,6 +12,7 @@ public record AvailabilityQueryResponse(
 ) {
 
     public record RoomOffer(
+            SupplierCode sourceSupplier,
             String hotelCode,
             String hotelName,
             String roomCode,

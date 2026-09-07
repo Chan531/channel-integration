@@ -44,7 +44,7 @@ public class SupplierAvailabilityQueryService {
                         queryRequest.adults(), queryRequest.children());
                 try {
                     client.getAvailabilityAndRates(request).offers().stream()
-                            .map(SupplierAvailabilityQueryService::toRoomOffer)
+                            .map(offer -> toRoomOffer(code, offer))
                             .forEach(offers::add);
                 } catch (SupplierUnavailableException e) {
                     log.warn("Failed to query availability for supplier {}: {}", code, e.getMessage());
@@ -56,13 +56,16 @@ public class SupplierAvailabilityQueryService {
         return new AvailabilityQueryResponse(offers, failedSuppliers);
     }
 
-    private static AvailabilityQueryResponse.RoomOffer toRoomOffer(GetAvailabilityAndRatesResponse.RoomOffer offer) {
+    private static AvailabilityQueryResponse.RoomOffer toRoomOffer(
+            SupplierCode sourceSupplier, GetAvailabilityAndRatesResponse.RoomOffer offer
+    ) {
         List<AvailabilityQueryResponse.RoomOffer.DailyInventory> dailyInventory = offer.dailyInventory().stream()
                 .map(daily -> new AvailabilityQueryResponse.RoomOffer.DailyInventory(
                         daily.date(), daily.remainingRooms()))
                 .toList();
 
         return new AvailabilityQueryResponse.RoomOffer(
+                sourceSupplier,
                 offer.hotelCode(),
                 offer.hotelName(),
                 offer.roomCode(),
