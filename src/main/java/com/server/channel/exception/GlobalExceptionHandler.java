@@ -1,4 +1,4 @@
-package com.server.channel.controller;
+package com.server.channel.exception;
 
 import java.util.Map;
 

@@ -1,4 +1,4 @@
-package com.server.channel.external;
+package com.server.channel.external.config;
 
 import java.time.Duration;
 

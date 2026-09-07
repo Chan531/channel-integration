@@ -1,4 +1,4 @@
-package com.server.channel.mocksupplier;
+package com.server.channel.mocksupplier.controller;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
