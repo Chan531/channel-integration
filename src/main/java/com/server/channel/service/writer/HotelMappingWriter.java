@@ -1,4 +1,4 @@
-package com.server.channel.service;
+package com.server.channel.service.writer;
 
 import java.util.List;
 import java.util.Map;
@@ -16,6 +16,7 @@ import com.server.channel.domain.SupplierRoom;
 import com.server.channel.external.dto.GetHotelsResponse;
 import com.server.channel.repository.SupplierHotelRepository;
 import com.server.channel.repository.SupplierRoomRepository;
+import com.server.channel.service.dto.RoomKey;
 
 import lombok.RequiredArgsConstructor;
 

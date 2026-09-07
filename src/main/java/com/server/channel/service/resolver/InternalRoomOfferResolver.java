@@ -1,4 +1,4 @@
-package com.server.channel.service;
+package com.server.channel.service.resolver;
 
 import java.util.HashMap;
 import java.util.List;
@@ -13,6 +13,7 @@ import com.server.channel.repository.SupplierHotelRepository;
 import com.server.channel.repository.SupplierRoomRepository;
 import com.server.channel.service.dto.AvailabilityQueryResponse;
 import com.server.channel.service.dto.InternalRoomOffer;
+import com.server.channel.service.dto.RoomKey;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,4 +1,4 @@
-package com.server.channel.service;
+package com.server.channel.service.chunker;
 
 import java.util.List;
 import java.util.Map;

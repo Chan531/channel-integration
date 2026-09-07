@@ -8,6 +8,7 @@ import com.server.channel.service.dto.AvailabilityQueryRequest;
 import com.server.channel.service.dto.AvailabilityQueryResponse;
 import com.server.channel.service.dto.InternalRoomOffer;
 import com.server.channel.service.dto.StaySearchResponse;
+import com.server.channel.service.resolver.InternalRoomOfferResolver;
 
 import lombok.RequiredArgsConstructor;
 

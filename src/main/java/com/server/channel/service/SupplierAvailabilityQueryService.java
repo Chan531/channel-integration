@@ -13,6 +13,7 @@ import com.server.channel.external.SupplierClient;
 import com.server.channel.external.dto.GetAvailabilityAndRatesRequest;
 import com.server.channel.external.dto.GetAvailabilityAndRatesResponse;
 import com.server.channel.external.exception.SupplierUnavailableException;
+import com.server.channel.service.chunker.SupplierHotelCodeChunker;
 import com.server.channel.service.dto.AvailabilityQueryRequest;
 import com.server.channel.service.dto.AvailabilityQueryResponse;
 import com.server.channel.service.dto.HotelCodeChunk;

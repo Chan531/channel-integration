@@ -8,6 +8,7 @@ import com.server.channel.domain.SupplierCode;
 import com.server.channel.external.SupplierClient;
 import com.server.channel.external.dto.GetHotelsResponse;
 import com.server.channel.external.exception.SupplierUnavailableException;
+import com.server.channel.service.writer.HotelMappingWriter;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
