@@ -99,7 +99,4 @@ public class InternalRoomOfferResolver {
 
     private record HotelKey(SupplierCode code, String hotelCode) {
     }
-
-    private record RoomKey(Long hotelId, String roomCode) {
-    }
 }

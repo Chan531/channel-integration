@@ -89,7 +89,4 @@ public class HotelMappingWriter {
                         .roomCode(room.roomCode())
                         .build());
     }
-
-    private record RoomKey(Long hotelId, String roomCode) {
-    }
 }

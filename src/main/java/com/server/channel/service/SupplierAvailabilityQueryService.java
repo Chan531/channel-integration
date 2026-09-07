@@ -40,7 +40,7 @@ public class SupplierAvailabilityQueryService {
                 .toList();
 
         List<ChunkResult> results = Flux.fromIterable(tasks)
-                .flatMap(task -> callAsync(task.client(), task.chunk(), queryRequest))
+                .flatMap(task -> callAsync(task, queryRequest))
                 .collectList()
                 .block();
 
@@ -64,13 +64,13 @@ public class SupplierAvailabilityQueryService {
     private record ChunkResult(List<AvailabilityQueryResponse.RoomOffer> offers, SupplierCode failedSupplier) {
     }
 
-    private Mono<ChunkResult> callAsync(SupplierClient client, HotelCodeChunk chunk, AvailabilityQueryRequest queryRequest) {
-        SupplierCode code = client.getSupplierCode();
+    private Mono<ChunkResult> callAsync(ChunkTask task, AvailabilityQueryRequest queryRequest) {
+        SupplierCode code = task.client().getSupplierCode();
         GetAvailabilityAndRatesRequest request = new GetAvailabilityAndRatesRequest(
-                chunk.hotelCodes(), queryRequest.checkIn(), queryRequest.checkOut(),
+                task.chunk().hotelCodes(), queryRequest.checkIn(), queryRequest.checkOut(),
                 queryRequest.adults(), queryRequest.children());
 
-        return Mono.fromCallable(() -> client.getAvailabilityAndRates(request))
+        return Mono.fromCallable(() -> task.client().getAvailabilityAndRates(request))
                 .subscribeOn(Schedulers.boundedElastic())
                 .map(response -> toSuccessResult(code, response))
                 .onErrorResume(SupplierUnavailableException.class, e -> toFailureResult(code, e));
