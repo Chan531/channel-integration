@@ -38,3 +38,6 @@ out/
 
 ### Private ###
 /private/
+
+### H2 file-mode DB ###
+/data/
