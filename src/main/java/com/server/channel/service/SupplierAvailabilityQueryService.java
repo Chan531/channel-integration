@@ -19,6 +19,7 @@ import com.server.channel.service.dto.HotelCodeChunk;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -38,21 +39,19 @@ public class SupplierAvailabilityQueryService {
                         .map(chunk -> new ChunkTask(client, chunk)))
                 .toList();
 
+        List<ChunkResult> results = Flux.fromIterable(tasks)
+                .flatMap(task -> callAsync(task.client(), task.chunk(), queryRequest))
+                .collectList()
+                .block();
+
         List<AvailabilityQueryResponse.RoomOffer> offers = new ArrayList<>();
         Set<SupplierCode> failedSuppliers = new HashSet<>();
 
-        for (ChunkTask task : tasks) {
-            SupplierCode code = task.client().getSupplierCode();
-            GetAvailabilityAndRatesRequest request = new GetAvailabilityAndRatesRequest(
-                    task.chunk().hotelCodes(), queryRequest.checkIn(), queryRequest.checkOut(),
-                    queryRequest.adults(), queryRequest.children());
-            try {
-                task.client().getAvailabilityAndRates(request).offers().stream()
-                        .map(offer -> toRoomOffer(code, offer))
-                        .forEach(offers::add);
-            } catch (SupplierUnavailableException e) {
-                log.warn("Failed to query availability for supplier {}: {}", code, e.getMessage());
-                failedSuppliers.add(code);
+        for (ChunkResult result : results) {
+            if (result.failedSupplier() != null) {
+                failedSuppliers.add(result.failedSupplier());
+            } else {
+                offers.addAll(result.offers());
             }
         }
 
