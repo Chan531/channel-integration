@@ -15,16 +15,18 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import com.server.channel.MockSupplierSupport;
 import com.server.channel.domain.SupplierCode;
+import com.server.channel.repository.SupplierHotelRepository;
 import com.server.channel.service.dto.AvailabilityQueryRequest;
 import com.server.channel.service.dto.AvailabilityQueryResponse;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 @SpringBootTest
 class SupplierAvailabilityQueryServiceTest {
 
     @Autowired
-    private HotelMappingSyncService hotelMappingSyncService;
+    private SupplierHotelRepository supplierHotelRepository;
 
     @Autowired
     private SupplierAvailabilityQueryService supplierAvailabilityQueryService;
@@ -37,9 +39,12 @@ class SupplierAvailabilityQueryServiceTest {
     }
 
     @BeforeEach
-    void 매핑을_동기화하고_컨트롤_클라이언트를_준비한다() {
+    void 매핑이_채워질_때까지_기다리고_컨트롤_클라이언트를_준비한다() {
         control = WebClient.create("http://localhost:9090");
-        hotelMappingSyncService.syncHotels();
+        // 매핑은 스케줄러(HotelMappingBatchScheduler)가 기동 시 자동으로 채운다.
+        // 여기서 또 syncHotels()를 직접 호출하면 스케줄러와 동시에 upsert를 시도하는
+        // 레이스가 생길 수 있어(유니크 제약 위반 위험), 채워질 때까지 기다리기만 한다.
+        await().atMost(Duration.ofSeconds(10)).until(() -> !supplierHotelRepository.findAll().isEmpty());
     }
 
     @AfterEach
