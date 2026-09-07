@@ -17,28 +17,31 @@ public class SupplierWebClientConfig {
     @Bean
     public WebClient supplierAWebClient(
             @Value("${supplier.a.base-url}") String baseUrl,
+            @Value("${supplier.a.api-key}") String apiKey,
             @Value("${supplier.a.connect-timeout-ms}") int connectTimeoutMs,
             @Value("${supplier.a.response-timeout-ms}") int responseTimeoutMs
     ) {
-        return buildWebClient(baseUrl, connectTimeoutMs, responseTimeoutMs);
+        return buildWebClient(baseUrl, apiKey, connectTimeoutMs, responseTimeoutMs);
     }
 
     @Bean
     public WebClient supplierBWebClient(
             @Value("${supplier.b.base-url}") String baseUrl,
+            @Value("${supplier.b.api-key}") String apiKey,
             @Value("${supplier.b.connect-timeout-ms}") int connectTimeoutMs,
             @Value("${supplier.b.response-timeout-ms}") int responseTimeoutMs
     ) {
-        return buildWebClient(baseUrl, connectTimeoutMs, responseTimeoutMs);
+        return buildWebClient(baseUrl, apiKey, connectTimeoutMs, responseTimeoutMs);
     }
 
-    private WebClient buildWebClient(String baseUrl, int connectTimeoutMs, int responseTimeoutMs) {
+    private WebClient buildWebClient(String baseUrl, String apiKey, int connectTimeoutMs, int responseTimeoutMs) {
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeoutMs)
                 .responseTimeout(Duration.ofMillis(responseTimeoutMs));
 
         return WebClient.builder()
                 .baseUrl(baseUrl)
+                .defaultHeader("X-Api-Key", apiKey)
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .build();
     }
