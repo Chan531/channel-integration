@@ -31,29 +31,33 @@ public class SupplierAvailabilityQueryService {
     public AvailabilityQueryResponse queryAll(AvailabilityQueryRequest queryRequest) {
         Map<SupplierCode, List<HotelCodeChunk>> chunksBySupplier = supplierHotelCodeChunker.chunksBySupplier();
 
+        List<ChunkTask> tasks = supplierClients.stream()
+                .flatMap(client -> chunksBySupplier.getOrDefault(client.getSupplierCode(), List.of()).stream()
+                        .map(chunk -> new ChunkTask(client, chunk)))
+                .toList();
+
         List<AvailabilityQueryResponse.RoomOffer> offers = new ArrayList<>();
         Set<SupplierCode> failedSuppliers = new HashSet<>();
 
-        for (SupplierClient client : supplierClients) {
-            SupplierCode code = client.getSupplierCode();
-            List<HotelCodeChunk> chunks = chunksBySupplier.getOrDefault(code, List.of());
-
-            for (HotelCodeChunk chunk : chunks) {
-                GetAvailabilityAndRatesRequest request = new GetAvailabilityAndRatesRequest(
-                        chunk.hotelCodes(), queryRequest.checkIn(), queryRequest.checkOut(),
-                        queryRequest.adults(), queryRequest.children());
-                try {
-                    client.getAvailabilityAndRates(request).offers().stream()
-                            .map(offer -> toRoomOffer(code, offer))
-                            .forEach(offers::add);
-                } catch (SupplierUnavailableException e) {
-                    log.warn("Failed to query availability for supplier {}: {}", code, e.getMessage());
-                    failedSuppliers.add(code);
-                }
+        for (ChunkTask task : tasks) {
+            SupplierCode code = task.client().getSupplierCode();
+            GetAvailabilityAndRatesRequest request = new GetAvailabilityAndRatesRequest(
+                    task.chunk().hotelCodes(), queryRequest.checkIn(), queryRequest.checkOut(),
+                    queryRequest.adults(), queryRequest.children());
+            try {
+                task.client().getAvailabilityAndRates(request).offers().stream()
+                        .map(offer -> toRoomOffer(code, offer))
+                        .forEach(offers::add);
+            } catch (SupplierUnavailableException e) {
+                log.warn("Failed to query availability for supplier {}: {}", code, e.getMessage());
+                failedSuppliers.add(code);
             }
         }
 
         return new AvailabilityQueryResponse(offers, failedSuppliers);
+    }
+
+    private record ChunkTask(SupplierClient client, HotelCodeChunk chunk) {
     }
 
     private static AvailabilityQueryResponse.RoomOffer toRoomOffer(
